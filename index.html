@@ -17,7 +17,7 @@
 /* Layout: header / tabbed left sidebar / preview board with view controls */
 :root{
   --bg:#f5f6f9; --panel:#ffffff; --field:#f2f3f6; --fg:#1f2433; --mute:#8b91a1; --line:#eceef3;
-  --accent:#8eb4ee; --accent2:#c4a6ee; --accent-soft:color-mix(in srgb,var(--accent) 16%,var(--panel)); --accent-ink:color-mix(in srgb,var(--accent) 55%,var(--fg));
+  --accent:#f7c1d5; --accent2:#e76a9a; --accent-soft:color-mix(in srgb,var(--accent) 16%,var(--panel)); --accent-ink:color-mix(in srgb,var(--accent) 55%,var(--fg));
   --sans:"Archivo","Noto Sans KR",system-ui,sans-serif;
   --mono:"JetBrains Mono","Noto Sans KR",ui-monospace,monospace;
 }
@@ -337,13 +337,14 @@ const PRESETS=[
 const DEF={
  t:{pair:'PAIR NAME',na:'CHARACTER A',nb:'CHARACTER B',title1:'TITLE',title2:'TEXT HERE',info:'PLACE NAME AND EVENT TITLE',year:'0000.',key:'KEYWORD, TAG',
     song:'음악 제목',artist:'아티스트',l1:'TEXT LINE 01',l2:'TEXT LINE 02',serial:'NO.0000',date:'0000.00.00',by:'@ID'},
- c:{...PRESETS[0].c},
+ c:{...PRESETS[1].c},
  fx:{tone:'orig',font:'serif',paper:'ring',grad:'1',spark:false,grain:0,speed:1,dir:1,disc:'cd',pngScale:'1',gifW:'800',fps:'10',gifMode:'pop',theme:'dream',dream:'base',card:'window',win:'tab',show:{title:true,info:true,track:true,quote:true,deco:true}}
 };
 let S=JSON.parse(JSON.stringify(DEF));
 const KEY='cdplayer3';
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){Object.assign(S.t,s.t||{});Object.assign(S.c,s.c||{});Object.assign(S.fx,s.fx||{});}}catch(e){}
 if(!S.fx.v5){S.fx.theme='dream';S.fx.dream='base';S.fx.card='window';S.fx.win='tab';S.fx.v5=1}
+if(!S.fx.v6){Object.assign(S.c,PRESETS[1].c);S.fx.v6=1}
 let saveT;const persist=()=>{clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},300)};
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
