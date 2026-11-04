@@ -320,8 +320,8 @@ input[type=range]:disabled{opacity:.4}
 <script>
 (()=>{
 const W=1600,H=900,CX=800,CY=450,R=250,LR=92,DEG=Math.PI/180;
-const CARDS={p:{cx:405,cy:420,w:440,h:440,rot:-3*DEG,lbl:'PAIR.JPG'},title:{cx:1160,cy:236,w:400,h:310,rot:2.5*DEG,lbl:'TITLE.TXT'},info:{cx:1168,cy:664,w:400,h:180,rot:-2*DEG,lbl:'INFO.DAT'},track:{cx:330,cy:112,w:330,h:84,rot:-1.5*DEG,lbl:'PLAYER.EXE'},quote:{cx:430,cy:740,w:420,h:80,rot:0}};
-const FR={p:{x:-200,y:-200,w:400,h:300},t:{x:-178,y:-14,w:356,h:152},i:{x:-180,y:-70,w:140,h:140}};
+const CARDS={p:{cx:405,cy:420,w:440,h:410,rot:-3*DEG,lbl:'PAIR.JPG'},title:{cx:1160,cy:236,w:400,h:310,rot:2.5*DEG,lbl:'TITLE.TXT'},info:{cx:1168,cy:664,w:400,h:180,rot:-2*DEG,lbl:'INFO.DAT'},track:{cx:330,cy:112,w:330,h:84,rot:-1.5*DEG,lbl:'PLAYER.EXE'},quote:{cx:430,cy:740,w:420,h:80,rot:0}};
+const FR={p:{x:-200,y:-187,w:400,h:300},t:{x:-178,y:-14,w:356,h:152},i:{x:-180,y:-70,w:140,h:140}};
 const SLOTCARD={p:'p',t:'title',i:'info'};
 const POPD={p:0,title:.12,info:.24,track:.36,quote:.46};
 const PRESETS=[
@@ -467,9 +467,9 @@ function framed(ctx,k,label){const f=FR[k];ctx.save();rrect(ctx,f.x,f.y,f.w,f.h,
 function pairCard(ctx){const C=S.c,T=S.t;return c=>{shell(ctx,c);framed(ctx,'p','ADD PAIR IMAGE');const f=FR.p;
   if(!(S.fx.card==='window'||S.fx.card==='hud')){ctx.save();ctx.rotate(.04);ctx.fillStyle=AG(ctx,-44,0,44,0,.32);ctx.fillRect(-44,-c.h/2-11,88,22);ctx.restore();}
   const cy=f.y+f.h;
-  if(T.pair){fitFont(ctx,tf,T.pair,30,15,f.w-20);ctx.fillStyle=C.ink;txt(ctx,'p','pair',fitText(ctx,T.pair,f.w-20),0,cy+66,'center');spacing(ctx,'0px')}
-  const a=T.na||'',b=T.nb||'',sep=a&&b?'  ×  ':'';if(a||b){ctx.font=MONO(12,600);spacing(ctx,'1.5px');ctx.fillStyle=alpha(C.ink,.55);const full=a+sep+b,shownTxt=fitText(ctx,full,f.w-20);ctx.textAlign='center';ctx.fillText(shownTxt,0,cy+88);ctx.textAlign='left';
-    const W0=ctx.measureText(shownTxt).width,sx=-W0/2;if(shownTxt===full){if(a)reg('p','na',sx,cy+77,ctx.measureText(a).width,15);if(b){const wb=ctx.measureText(b).width;reg('p','nb',sx+W0-wb,cy+77,wb,15)}}else reg('p','na',sx,cy+77,W0,15);spacing(ctx,'0px')}}}
+  if(T.pair){fitFont(ctx,tf,T.pair,30,15,f.w-20);ctx.fillStyle=C.ink;txt(ctx,'p','pair',fitText(ctx,T.pair,f.w-20),0,cy+46,'center');spacing(ctx,'0px')}
+  const a=T.na||'',b=T.nb||'',sep=a&&b?'  ×  ':'';if(a||b){ctx.font=MONO(12,600);spacing(ctx,'1.5px');ctx.fillStyle=alpha(C.ink,.55);const full=a+sep+b,shownTxt=fitText(ctx,full,f.w-20);ctx.textAlign='center';ctx.fillText(shownTxt,0,cy+70);ctx.textAlign='left';
+    const W0=ctx.measureText(shownTxt).width,sx=-W0/2;if(shownTxt===full){if(a)reg('p','na',sx,cy+59,ctx.measureText(a).width,15);if(b){const wb=ctx.measureText(b).width;reg('p','nb',sx+W0-wb,cy+59,wb,15)}}else reg('p','na',sx,cy+59,W0,15);spacing(ctx,'0px')}}}
 function titleCard(ctx){const C=S.c,T=S.t;return c=>{shell(ctx,c);const x0=-c.w/2+22,mw=c.w-44,top=-c.h/2;
   if(T.title1){fitFont(ctx,tf,T.title1,44,18,mw);ctx.fillStyle=C.ink;txt(ctx,'title','title1',fitText(ctx,T.title1,mw),x0,top+70);spacing(ctx,'0px')}
   if(T.title2){const ty=T.title1?top+80:top+34;const fs=fitFont(ctx,tf,T.title2,T.title1?26:36,13,mw-20);const t=fitText(ctx,T.title2,mw-20),w=ctx.measureText(t).width;ctx.fillStyle=AG(ctx,x0,0,x0+w+16,0,.32);ctx.fillRect(x0,ty,w+16,fs*1.18);ctx.fillStyle=C.ink;ctx.fillText(t,x0+8,ty+fs*.92);reg('title','title2',x0,ty,w+16,fs*1.18);spacing(ctx,'0px')}
@@ -528,7 +528,7 @@ function drawDisc(ctx,ang){const TAU=Math.PI*2;const C=S.c,lp=S.fx.disc==='lp',A
 const FULL={p:1,title:1,info:1,track:1,quote:1};
 const ORDER=['quote','track','info','title','p'];
 const shown=k=>k==='p'||S.fx.show[k]!==false;
-function render(ctx,sc,ang,ui,pops){pops=pops||FULL;if(ui){TR=[];regOn=true}
+function render(ctx,sc,ang,ui,pops,fixedF){pops=pops||FULL;if(ui){TR=[];regOn=true}
   const C=S.c,T=S.t,A2=C.accent2||C.accent,lp=S.fx.disc==='lp';if(lp&&vinylFor!==C.vinyl)buildVinyl();
   ctx.setTransform(sc,0,0,sc,0,0);ctx.globalAlpha=1;ctx.textAlign='left';ctx.textBaseline='alphabetic';spacing(ctx,'0px');
   if(S.fx.grad==='1'){const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,mix(C.bg,C.accent,.08));g.addColorStop(.5,mix(C.bg,C.accent,.16));g.addColorStop(1,mix(C.bg,A2,.3));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -586,7 +586,7 @@ function render(ctx,sc,ang,ui,pops){pops=pops||FULL;if(ui){TR=[];regOn=true}
   ctx.strokeStyle=alpha(C.accent,.4);ctx.lineWidth=1.2;ctx.setLineDash([2,8]);ctx.beginPath();ctx.arc(CX,CY,R+22,0,7);ctx.stroke();
   ctx.setLineDash([]);ctx.globalAlpha=1;
   drawDisc(ctx,ang);
-  const f=((S.fx.dir*ang/(Math.PI*2))%1+1)%1;
+  const f=fixedF!=null?fixedF:((S.fx.dir*ang/(Math.PI*2))%1+1)%1;
   const make={p:()=>pairCard(ctx),title:()=>titleCard(ctx),info:()=>infoCard(ctx),track:()=>trackCard(ctx,f),quote:()=>quoteCard(ctx)};
   for(const k of ORDER)if(shown(k))withCard(ctx,k,pops[k],make[k]());
   ctx.font=MONO(10.5,600);spacing(ctx,'2px');ctx.fillStyle=alpha(C.ink,.42);ctx.textAlign='right';ctx.fillText('CD PLAYER MAKER',1544,872);
@@ -698,7 +698,7 @@ async function deliver(blob,ext){const name=fname(ext);const dl=await dlP;
   $('#sheetImg').src=u;$('#sheetMsg').textContent=`이미지를 길게 누르거나 우클릭해서 "${name}"으로 저장하세요.`;$('#sheet').hidden=false;status('미리보기 창에서 저장할 수 있어요.')}
 $('#sheetClose').addEventListener('click',()=>{$('#sheet').hidden=true;URL.revokeObjectURL($('#sheetImg').src)});
 let busy=false;function lock(v){busy=v;for(const id of['#savePng','#saveGif','#hdPng','#hdGif'])$(id).disabled=v}
-async function exportPNG(){if(busy)return;lock(true);try{await ensureFonts();const k=+S.fx.pngScale||1;const c=mk(W*k,H*k);render(c.getContext('2d'),k,ang,false);
+async function exportPNG(){if(busy)return;lock(true);try{await ensureFonts();const k=+S.fx.pngScale||1;const c=mk(W*k,H*k);render(c.getContext('2d'),k,0,false,FULL,.35);
   const b=await new Promise(r=>c.toBlob(r,'image/png'));prog.style.width='100%';await deliver(b,'png')}finally{lock(false);setTimeout(()=>prog.style.width='0',600)}}
 function gifPlan(){const turn=10/S.fx.speed,fps=+S.fx.fps,pop=S.fx.gifMode!=='spin';const m=pop?Math.max(1,Math.ceil(4/turn)):1;const T=turn*m;const n=Math.max(12,Math.round(T*fps));const delay=Math.max(2,Math.round(100*T/n));return{n,delay,turn,T,m,pop}}
 function updateEst(){const{n,T,pop}=gifPlan();const w=+S.fx.gifW;$('#est').textContent=`${w} × ${Math.round(w*9/16)} · ${n}프레임 · ${T.toFixed(1)}초 반복`+(pop?' · 카드가 튀어나왔다 들어가요':' · 회전 속도는 STYLE에서')}
