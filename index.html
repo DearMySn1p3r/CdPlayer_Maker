@@ -24,6 +24,9 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#111318;--panel:#181b22;--field:#20242d;--fg:#e8ebf2;--mute:#8a91a2;--line:#262a33;--accent-ink:color-mix(in srgb,var(--accent) 70%,var(--fg));color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#111318;--panel:#181b22;--field:#20242d;--fg:#e8ebf2;--mute:#8a91a2;--line:#262a33;--accent-ink:color-mix(in srgb,var(--accent) 70%,var(--fg));color-scheme:dark}
 [hidden]{display:none!important}
+.capturing .scroll,.capturing .board{scrollbar-width:none}
+.capturing .mark i{animation:none}
+.capturing .scroll::-webkit-scrollbar,.capturing .board::-webkit-scrollbar{display:none}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--panel);color:var(--fg);font-family:var(--sans);font-size:13px;
@@ -45,6 +48,9 @@ button,input{font:inherit;color:inherit}
 .b.dark{background:var(--fg);border-color:var(--fg);color:var(--panel)}
 .b.ghost{border-color:transparent;background:none;color:var(--mute);font-weight:600}
 .b.ghost:hover{color:var(--fg)}
+.b.cap{font-size:11px;opacity:.55;padding:6px 8px}
+.b.cap:hover{opacity:1}
+.bar .t,.bar .meta{white-space:nowrap}
 .b[disabled]{opacity:.45;pointer-events:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -179,6 +185,7 @@ input[type=range]:disabled{opacity:.4}
   <header class="hd">
     <div class="logo"><div class="mark"><i></i></div><b>CD PLAYER MAKER</b><span>CD 페어틀 생성기</span></div>
     <div class="sp"></div>
+    <button class="b ghost cap" id="capBtn" type="button" title="사이트 화면 전체를 이미지로 저장">캡처</button>
     <button class="b ghost" id="resetAll" type="button">초기화</button>
     <button class="b soft" id="hdPng" type="button">PNG 저장</button>
     <button class="b dark" id="hdGif" type="button">GIF 저장</button>
@@ -366,7 +373,12 @@ const MONO=(px,w=600)=>`${w} ${px}px "Archivo","Noto Sans KR",sans-serif`;
 function ensureFonts(){const t=Object.values(S.t).join('')+'ADDIMAGEPLAYNOWCDPLAYERMAKERSIDEPROFILE0123456789·/×—[]{}+';
   if(!document.fonts||!document.fonts.load)return Promise.resolve();
   return Promise.all([tf(40),SANS(16),SANS(16,500),SANS(16,600),SANS(16,800),MONO(12),MONO(12,700),'400 40px "Gloock"','800 40px "Nanum Myeongjo"','700 40px "Gaegu"','400 40px "DotGothic16"','800 40px "Archivo"'].map(s=>document.fonts.load(s,t).catch(()=>{})));}
-function spacing(ctx,v){if('letterSpacing' in ctx)ctx.letterSpacing=v}
+function spacing(ctx,v){ctx._ls=parseFloat(v)||0}
+(()=>{const P=CanvasRenderingContext2D.prototype,F=P.fillText,St=P.strokeText,M=P.measureText;
+  P.measureText=function(t){const m=M.call(this,t);const ls=this._ls||0;if(!ls)return m;const n=[...String(t)].length;return{width:m.width+ls*n,actualBoundingBoxAscent:m.actualBoundingBoxAscent,actualBoundingBoxDescent:m.actualBoundingBoxDescent}};
+  const draw=fn=>function(t,x,y){const ls=this._ls||0;t=String(t);if(!ls)return fn.call(this,t,x,y);const cs=[...t],ws=cs.map(c=>M.call(this,c).width),tot=ws.reduce((a,b)=>a+b,0)+ls*cs.length,al=this.textAlign;
+    let cx=al==='center'?x-tot/2:(al==='right'||al==='end')?x-tot:x;this.textAlign='left';for(let i=0;i<cs.length;i++){fn.call(this,cs[i],cx,y);cx+=ws[i]+ls}this.textAlign=al};
+  P.fillText=draw(F);P.strokeText=draw(St)})();
 function fitText(ctx,text,maxW){text=text||'';if(ctx.measureText(text).width<=maxW)return text;let t=[...text];while(t.length&&ctx.measureText(t.join('')+'…').width>maxW)t.pop();return t.join('')+'…'}
 function fitFont(ctx,fontFn,text,maxSize,minSize,maxW){let fs=maxSize;spacing(ctx,'0px');ctx.font=fontFn(fs);const w=ctx.measureText(text).width;if(w>maxW){fs=Math.max(minSize,fs*maxW/w);ctx.font=fontFn(fs)}spacing(ctx,(-fs*.04).toFixed(2)+'px');return fs}
 
@@ -611,12 +623,12 @@ function layout(){const bw=board.clientWidth-(narrow.matches?24:64),bh=board.cli
 new ResizeObserver(layout).observe(board);layout();
 $('#zIn').onclick=()=>{vz=Math.min(2.5,+(vz+.1).toFixed(2));layout()};$('#zOut').onclick=()=>{vz=Math.max(.5,+(vz-.1).toFixed(2));layout()};$('#zFit').onclick=()=>{vz=1;layout()};
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let playing=!reduce,ang=0,last=performance.now(),active='p',hover=false,hoverSlot=null,drag=null;const ptrs=new Map();
+let freezeShot=false,playing=!reduce,ang=0,last=performance.now(),active='p',hover=false,hoverSlot=null,drag=null;const ptrs=new Map();
 const pops={p:0,title:0,info:0,track:0,quote:0};let popStart=reduce?null:performance.now()+250;if(reduce)Object.assign(pops,FULL);
 function popOut(t,k){return Math.min(1,Math.max(0,(t-POPD[k])/.6))}
 function loop(t){const dt=Math.min(.1,(t-last)/1000);last=t;if(playing&&!(drag&&drag.k==='l'))ang+=dt*S.fx.speed*S.fx.dir*Math.PI*2/10;
   if(popStart!=null){const pt=(t-popStart)/1000;for(const k in pops)pops[k]=popOut(pt,k);if(pt>1.2)popStart=null}
-  render(sctx,sc,ang,true,pops);requestAnimationFrame(loop)}
+  if(freezeShot)render(sctx,sc,0,false,FULL,0);else render(sctx,sc,ang,true,pops);requestAnimationFrame(loop)}
 function replayPop(){for(const k in pops)pops[k]=0;popStart=performance.now()}
 requestAnimationFrame(loop);
 function toD(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}}
@@ -692,14 +704,14 @@ let confirmReset=0;const rb=$('#resetAll');rb.addEventListener('click',()=>{cons
 const dlP=(window.claude&&window.claude.use)?window.claude.use('downloads').catch(()=>null):Promise.resolve(null);
 const statusEl=$('#status'),prog=$('#prog');function status(t){statusEl.textContent=t}
 function fname(ext){const n=(S.t.pair||'pair').replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,'_').slice(0,40)||'pair';return`CDPLAYER_${n}.${ext}`}
-async function deliver(blob,ext){const name=fname(ext);const dl=await dlP;
+async function deliver(blob,ext,custom){const name=custom||fname(ext);const dl=await dlP;
   if(dl){try{await dl.save({filename:name,data:blob});status(`${name} 저장 완료 · ${(blob.size/1048576).toFixed(1)}MB`);return}catch(e){if(e&&e.code==='declined'){status('저장을 취소했어요.');return}if(e&&e.code==='rate_limited'){status('이미 저장 창이 열려 있어요. 잠시 후 다시 눌러 주세요.');return}}}
   const u=URL.createObjectURL(blob);
   if(!window.claude){const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);status(`${name} 저장 완료 · ${(blob.size/1048576).toFixed(1)}MB`);return}
   $('#sheetImg').src=u;$('#sheetMsg').textContent=`이미지를 길게 누르거나 우클릭해서 "${name}"으로 저장하세요.`;$('#sheet').hidden=false;status('미리보기 창에서 저장할 수 있어요.')}
 $('#sheetClose').addEventListener('click',()=>{$('#sheet').hidden=true;URL.revokeObjectURL($('#sheetImg').src)});
-let busy=false;function lock(v){busy=v;for(const id of['#savePng','#saveGif','#hdPng','#hdGif'])$(id).disabled=v}
-async function exportPNG(){if(busy)return;lock(true);try{await ensureFonts();const k=+S.fx.pngScale||1;const c=mk(W*k,H*k);render(c.getContext('2d'),k,0,false,FULL,.35);
+let busy=false;function lock(v){busy=v;for(const id of['#savePng','#saveGif','#hdPng','#hdGif','#capBtn'])$(id).disabled=v}
+async function exportPNG(){if(busy)return;lock(true);try{await ensureFonts();const k=+S.fx.pngScale||1;const c=mk(W*k,H*k);render(c.getContext('2d'),k,0,false,FULL,0);
   const b=await new Promise(r=>c.toBlob(r,'image/png'));prog.style.width='100%';await deliver(b,'png')}finally{lock(false);setTimeout(()=>prog.style.width='0',600)}}
 function gifPlan(){const turn=10/S.fx.speed,fps=+S.fx.fps,pop=S.fx.gifMode!=='spin';const m=pop?Math.max(1,Math.ceil(4/turn)):1;const T=turn*m;const n=Math.max(12,Math.round(T*fps));const delay=Math.max(2,Math.round(100*T/n));return{n,delay,turn,T,m,pop}}
 function updateEst(){const{n,T,pop}=gifPlan();const w=+S.fx.gifW;$('#est').textContent=`${w} × ${Math.round(w*9/16)} · ${n}프레임 · ${T.toFixed(1)}초 반복`+(pop?' · 카드가 튀어나왔다 들어가요':' · 회전 속도는 STYLE에서')}
@@ -740,6 +752,16 @@ async function exportGIF(){if(busy)return;lock(true);try{await ensureFonts();
     prog.style.width=(i/n*100)+'%';status(`GIF 프레임 ${i+1} / ${n}`);if(i%2===0)await new Promise(r=>setTimeout(r))}
   out.u8(0x3B);const blob=new Blob([out.b.subarray(0,out.p)],{type:'image/gif'});prog.style.width='100%';await deliver(blob,'gif');
   }catch(e){status('GIF를 만들지 못했어요. 크기를 640으로 줄여 다시 시도해 보세요.')}finally{lock(false);setTimeout(()=>prog.style.width='0',800)}}
+async function loadH2I(){if(window.htmlToImage)return window.htmlToImage;await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';sc.onload=res;sc.onerror=()=>rej(new Error('load'));document.head.appendChild(sc)});return window.htmlToImage}
+async function captureScreen(){if(busy)return;busy=true;const root=document.documentElement;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  try{const h=await loadH2I();const el=document.querySelector('.app');root.classList.add('capturing');freezeShot=true;hover=false;hoverSlot=null;hoverText=null;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r())));
+    const opt={backgroundColor:getComputedStyle(document.body).backgroundColor,pixelRatio:Math.min(2,window.devicePixelRatio||1),width:el.scrollWidth,height:el.scrollHeight,filter:n=>!(n.id==='ed'||n.id==='sheet'||n.id==='capBtn')};
+    let blob=null;try{blob=await h.toBlob(el,opt)}catch(e){}if(!blob)blob=await h.toBlob(el,{...opt,skipFonts:true});root.classList.remove('capturing');freezeShot=false;if(!blob)throw new Error('empty');
+    const d=new Date(),stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+    await deliver(blob,'png',`CDPLAYER_screen_${stamp}.png`)}
+  catch(e){root.classList.remove('capturing');freezeShot=false;status('화면 캡처를 만들지 못했어요. 잠시 후 다시 눌러 주세요.');showPanel('exp')}
+  finally{busy=false;$('#capBtn').textContent='캡처'}}
+$('#capBtn').addEventListener('click',captureScreen);
 $('#savePng').addEventListener('click',exportPNG);$('#hdPng').addEventListener('click',exportPNG);
 $('#saveGif').addEventListener('click',exportGIF);$('#hdGif').addEventListener('click',()=>{showPanel('exp');exportGIF()});
 
